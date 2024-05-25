@@ -7,7 +7,6 @@ app.use(express.json()); // 用于解析JSON格式的请求体
 const cors = require('cors');
 app.use(cors());
 
-// 示例路由
 app.post('/register', (req, res) => {
   console.log('接收到的注册数据:', req.body);
   // 这里应该添加注册逻辑
