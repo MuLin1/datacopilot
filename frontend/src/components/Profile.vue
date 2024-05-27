@@ -27,6 +27,7 @@
       <button @click="closeSuccessMessage">OK</button>
     </div>
   </div>
+  <router-link to="/" class="return-button">返回主页面</router-link>
 </template>
 
 <script>
@@ -141,6 +142,20 @@ button {
   transform: translate(-50%, -50%);
   background-color: #fff;
   padding: 20px;
+  border-radius: 5px;
+}
+
+.return-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: #808080;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 16px;
+  font-family: "Times New Roman", Times, serif;
+  padding: 10px 20px;
+  border: none;
   border-radius: 5px;
 }
 </style>
