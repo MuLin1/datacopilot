@@ -38,6 +38,7 @@ export default {
   methods: {
     register() {
       if (this.password === this.confirmPassword) {
+      console.log('to register');
         axios.post('http://localhost:3000/register', {
           username: this.username,
           password: this.password

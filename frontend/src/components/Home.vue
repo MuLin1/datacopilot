@@ -3,8 +3,19 @@
     <div class="top-bar">主页面</div>
     <div class="search-box">
       <p>查询输入框</p>
-      <input type="text" placeholder="请输入查询内容">
-      <button class="submit-button">提交</button>
+      <input v-model="sqlStatement" type="text" placeholder="请输入查询内容">
+      <button @click="sendSql"  class="submit-button">提交</button>
+    </div>
+    <div v-if="queryResults && queryResults.length > 0">
+      <h2>查询结果：</h2>
+      <div v-for="(result, index) in queryResults" :key="index">
+        <h3>结果 {{ index + 1 }}</h3>
+        <ul>
+          <li v-for="(row, rowIndex) in result" :key="rowIndex">
+            {{ row.column_name }}
+          </li>
+        </ul>
+      </div>
     </div>
     <div class="image-box" @click="goToProfile">
     <img src="../images/个人中心.png" alt="Your Image">
@@ -30,10 +41,17 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: 'Home',
   data() {
     return {
+<<<<<<< Updated upstream
+=======
+      // ... (之前的数据)
+      sqlStatement:'',
+      queryResults:[],
+>>>>>>> Stashed changes
       records: [
         { id: 1, time: '2022-01-01', operator: 'User1', action: '登录' },
         { id: 2, time: '2022-01-02', operator: 'User2', action: '注册' },
@@ -50,6 +68,16 @@ export default {
     },
     toggleTable() {
       this.isExpanded = !this.isExpanded;
+    },
+    sendSql(){
+    axios.post('http://localhost:3000/sql',{sql:this.sqlStatement})
+    .then(response=>{
+    console.log("success send",response.data);
+    queryResults=response.data;
+    })
+    .catch(error=>{
+    console.error("error sending",error);
+    });
     }
   }
 };
