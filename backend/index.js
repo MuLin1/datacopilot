@@ -28,35 +28,36 @@ connection.connect((err) => {
 app.post('/register', (req, res) => {
   const { username, password } = req.body;
 
+  // 获取当前系统时间
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
   // 检查用户名是否已存在于数据库中
   const checkUsernameQuery = 'SELECT * FROM users WHERE username = ?';
   connection.query(checkUsernameQuery, [username], (err, results) => {
-    let maxUserId;
     if (err) {
       console.error(err);
-      res.status(500).json({message: '注册失败'});
+      res.status(500).json({ message: '注册失败' });
     } else {
       if (results.length > 0) {
         // 如果存在相同用户名的记录，返回已存在消息
-        res.status(400).json({message: '该用户已存在'});
+        res.status(400).json({ message: '该用户已存在' });
       } else {
-        maxUserId = 10001
         // 获取当前最大的idusers值
         const getMaxUserIdQuery = 'SELECT MAX(idusers) AS maxUserId FROM users';
         connection.query(getMaxUserIdQuery, (err, result) => {
           if (err) {
             console.error(err);
-            res.status(500).json({message: '注册失败'});
+            res.status(500).json({ message: '注册失败' });
           } else {
             let nextUserId = result[0].maxUserId ? result[0].maxUserId + 1 : 10001;
-            // 将用户名、密码和自动分配的idusers插入到数据库中
-            const insertUserQuery = 'INSERT INTO users (idusers, username, password) VALUES (?, ?, ?)';
-            connection.query(insertUserQuery, [nextUserId, username, password], (err, result) => {
+            // 将用户名、密码、自动分配的idusers和注册日期插入到数据库中
+            const insertUserQuery = 'INSERT INTO users (idusers, username, password, register_date) VALUES (?, ?, ?, ?)';
+            connection.query(insertUserQuery, [nextUserId, username, password, currentDate], (err, result) => {
               if (err) {
                 console.error(err);
-                res.status(500).json({message: '注册失败'});
+                res.status(500).json({ message: '注册失败' });
               } else {
-                res.status(200).json({message: '注册成功'});
+                res.status(200).json({ message: '注册成功' });
               }
             });
           }
@@ -65,6 +66,7 @@ app.post('/register', (req, res) => {
     }
   });
 });
+
 
 
 app.listen(3000, () => {
