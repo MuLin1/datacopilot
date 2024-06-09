@@ -2,19 +2,75 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const app = express();
-const PORT = 3000;
-
-// 解析请求体中的 JSON 数据
-app.use(bodyParser.json());
 
 // 处理跨域请求问题
 const cors = require('cors');
 app.use(cors());
 
+const connection = mysql.createConnection({
+  host: 'localhost',
+  port:3306,
+  user: 'root',
+  password: 'MuLin0301',
+  database: 'userdata'
+});
+
+app.use(bodyParser.json());
+
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to database: ' + err.stack);
+    return;
+  }
+  console.log('Connected to database as ID ' + connection.threadId);
+});
+
 app.post('/register', (req, res) => {
-  console.log('接收到的注册数据:', req.body);
-  // 这里应该添加注册逻辑
-  res.status(200).send('注册成功');
+  const { username, password } = req.body;
+
+  // 获取当前系统时间
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  // 检查用户名是否已存在于数据库中
+  const checkUsernameQuery = 'SELECT * FROM users WHERE username = ?';
+  connection.query(checkUsernameQuery, [username], (err, results) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ message: '注册失败' });
+    } else {
+      if (results.length > 0) {
+        // 如果存在相同用户名的记录，返回已存在消息
+        res.status(400).json({ message: '该用户已存在' });
+      } else {
+        // 获取当前最大的idusers值
+        const getMaxUserIdQuery = 'SELECT MAX(idusers) AS maxUserId FROM users';
+        connection.query(getMaxUserIdQuery, (err, result) => {
+          if (err) {
+            console.error(err);
+            res.status(500).json({ message: '注册失败' });
+          } else {
+            let nextUserId = result[0].maxUserId ? result[0].maxUserId + 1 : 10001;
+            // 将用户名、密码、自动分配的idusers和注册日期插入到数据库中
+            const insertUserQuery = 'INSERT INTO users (idusers, username, password, register_date) VALUES (?, ?, ?, ?)';
+            connection.query(insertUserQuery, [nextUserId, username, password, currentDate], (err, result) => {
+              if (err) {
+                console.error(err);
+                res.status(500).json({ message: '注册失败' });
+              } else {
+                res.status(200).json({ message: '注册成功' });
+              }
+            });
+          }
+        });
+      }
+    }
+  });
+});
+
+
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
 
 app.post('/sql',(req,res)=>{
@@ -23,9 +79,9 @@ const { sql } = req.body;
 //数据库连接查询
 const connection = mysql.createConnection({
   host: 'localhost',
-  port:3308,
+  port:3306,
   user: 'root',
-  password: 'chd123456',
+  password: 'MuLin0301',
   database: 'todomvc',});
 
 
@@ -72,9 +128,4 @@ connection.connect((err) => {
     res.json(results);
   });
 
-});
-
-
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
 });
