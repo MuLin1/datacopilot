@@ -4,19 +4,16 @@
     <div class="search-box">
       <p>查询输入框</p>
       <input v-model="sqlStatement" type="text" placeholder="请输入查询内容">
-      <button @click="sendSql"  class="submit-button">提交</button>
+      <button @click="openChartModal"  class="submit-button">提交</button>
     </div>
-    <div v-if="queryResults && queryResults.length > 0">
-      <h2>查询结果：</h2>
-      <div v-for="(result, index) in queryResults" :key="index">
-        <h3>结果 {{ index + 1 }}</h3>
-        <ul>
-          <li v-for="(row, rowIndex) in result" :key="rowIndex">
-            {{ row.column_name }}
-          </li>
-        </ul>
-      </div>
+    <div v-if="chartModalOpen" class="chart-modal">
+    <button @click="closeChartModal">关闭</button>
+      <canvas ref="lineChart"></canvas>
+      <canvas ref="barChart"></canvas>
     </div>
+
+
+
     <div class="image-box" @click="goToProfile">
     <img src="../images/个人中心.png" alt="Your Image">
     <p>个人主页</p>
@@ -42,12 +39,17 @@
 
 <script>
 import axios from 'axios';
+import Chart from 'chart.js/auto';
 export default {
   name: 'Home',
   data() {
   return {
     sqlStatement: '',
     queryResults: [],
+    chartModalOpen: false,
+      lineChart: null,
+      barChart: null,
+      dynamicData: {}, // 接收动态返回的数据
     records: [
       { id: 1, time: '2022-01-01', operator: 'User1', action: '登录' },
       { id: 2, time: '2022-01-02', operator: 'User2', action: '注册' },
@@ -58,6 +60,7 @@ export default {
     isExpanded: false
   };
   },
+
   methods: {
     goToProfile() {
       this.$router.push('/profile');
@@ -65,17 +68,87 @@ export default {
     toggleTable() {
       this.isExpanded = !this.isExpanded;
     },
+    openChartModal() {
+      this.chartModalOpen = true;
+      this.sendSql(); // 在打开模态框时发送SQL请求
+    },
+
+    closeChartModal() {
+      this.chartModalOpen = false;
+    },
+
     sendSql(){
     axios.post('http://localhost:3000/sql',{sql:this.sqlStatement})
     .then(response=>{
     console.log("success send",response.data);
     this.queryResults=response.data;
+    this.queryResults = response.data;
+    this.dynamicData = response.data; // 保存动态返回的数据
+   console.log(Object.keys(this.dynamicData[0]).slice(2))
+   console.log(Object.values(this.dynamicData[0]).slice(2))
+  // console.log(this.queryResults)
+   //console.log(this.dynamicData[0].stock_name)
+    // 确保DOM更新后再渲染图表
+        this.$nextTick(() => {
+          this.renderLineChart();
+          this.renderBarChart();
+        });
     })
     .catch(error=>{
     console.error("error sending",error);
     });
-    }
-  }
+    },
+
+      renderLineChart() {
+      const lineCtx = this.$refs.lineChart.getContext('2d');
+      this.lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(this.dynamicData[0]).slice(2), // 排除前两个属性
+          datasets: [{
+            label: Object.values(this.dynamicData[0])[1],
+            data: Object.values(this.dynamicData[0]).slice(2), // 排除前两个属性
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+               stepSize: 0.5
+            }
+          }
+        }
+      });
+    },
+
+    renderBarChart() {
+      const barCtx = this.$refs.barChart.getContext('2d');
+      this.barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(this.dynamicData[0]).slice(2), // 排除前两个属性
+          datasets: [{
+            label: Object.values(this.dynamicData[0])[1],
+            data: Object.values(this.dynamicData[0]).slice(2), // 排除前两个属性
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgb(75, 192, 192)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          indexAxis: 'x',
+          scales: {
+            y: {
+              beginAtZero: true,
+               stepSize: 0.5
+            }
+          }
+        }
+      });
+    },}
 };
 </script>
 
@@ -83,6 +156,22 @@ export default {
 .home-container {
   text-align: center;
   height: 100%;
+}
+
+.chart-modal {
+ z-index: 100;
+   position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  width: 80%; /* 自适应宽度 */
+  height: 80%; /* 自适应高度 */
+  overflow: auto; /* 当内容超出高度时显示滚动条 */
+
+
 }
 
 .top-bar {

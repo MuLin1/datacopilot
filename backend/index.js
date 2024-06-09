@@ -46,8 +46,29 @@ connection.connect((err) => {
       res.status(500).json({ error: 'Error executing query' });
       return;
     }
+//     const orderedDataList = results.map(data => {
+//    return {
+//      stock_code: data.stock_code,
+//      stock_name: data.stock_name,
+//      avg_price_jan: data.avg_price_jan,
+//      avg_price_feb: data.avg_price_feb,
+//      avg_price_mar: data.avg_price_mar,
+//      avg_price_apr: data.avg_price_apr,
+//      avg_price_may: data.avg_price_may,
+//      avg_price_jun: data.avg_price_jun,
+//      avg_price_jul: data.avg_price_jul,
+//      avg_price_aug: data.avg_price_aug,
+//      avg_price_sep: data.avg_price_sep,
+//      avg_price_oct: data.avg_price_oct,
+//      avg_price_nov: data.avg_price_nov,
+//      avg_price_dec: data.avg_price_dec
+//    };
+//  });
 
     // 返回查询结果
+   console.log(results);
+   console.log(results[0].stock_name);
+
     res.json(results);
   });
 

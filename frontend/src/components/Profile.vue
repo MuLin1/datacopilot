@@ -111,7 +111,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.9); /* 将背景设置为白色，透明度可根据需要调整 */
+  background-color: rgba(255, 255, 255, 1.0); /* 将背景设置为白色，透明度可根据需要调整 */
   display: flex;
   justify-content: center;
   align-items: center;
