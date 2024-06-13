@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rybin.bank.mapper.CarMapper">
+
+    <!--
+    Explicitly announce to enable secondary cache.
+    Moreover, class must be serializable.
+    Add type to use ehCache plugin.
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+     -->
+
+    <insert id="insertCar">
+        INSERT INTO t_car VALUE (null, #{carNum}, #{brand}, #{guidePrice}, #{produceTime}, #{carType});
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM t_car WHERE id = #{id};
+    </delete>
+
+    <update id="updateById">
+        UPDATE t_car SET
+            car_num = #{carNum},
+            brand = #{brand},
+            guide_price = #{guidePrice},
+            produce_time = #{produceTime},
+            car_type = #{carType}
+        WHERE
+            id = #{id};
+    </update>
+
+    <insert id="insertBatch">
+        INSERT INTO t_car VALUES
+        <foreach collection="cars" item="it" separator=",">
+            (null, #{it.carNum}, #{it.brand}, #{it.guidePrice}, #{it.produceTime}, #{it.carType})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultType="com.rybin.bank.pojo.Car">
+        SELECT * FROM t_car WHERE id = #{id};
+    </select>
+
+    <select id="selectMultiple" resultType="com.rybin.bank.pojo.Car">
+        SELECT * FROM t_car WHERE 1=1
+        <if test="id != null and id != ''">
+            AND id=#{id}
+        </if>
+        <if test="carNum != null and carNum != ''">
+            AND car_num=#{carNum}
+        </if>
+        <if test="guidePrice != null and guidePrice != ''">
+            AND guide_price=#{guidePrice}
+        </if>
+    </select>
+
+</mapper>

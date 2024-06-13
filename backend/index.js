@@ -1,19 +1,131 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const mysql = require('mysql');
 const app = express();
-
-app.use(express.json()); // 用于解析JSON格式的请求体
 
 // 处理跨域请求问题
 const cors = require('cors');
 app.use(cors());
 
-app.post('/register', (req, res) => {
-  console.log('接收到的注册数据:', req.body);
-  // 这里应该添加注册逻辑
-  res.status(200).send('注册成功');
+const connection = mysql.createConnection({
+  host: 'localhost',
+  port:3306,
+  user: 'root',
+  password: 'MuLin0301',
+  database: 'userdata'
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
+app.use(bodyParser.json());
+
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to database: ' + err.stack);
+    return;
+  }
+  console.log('Connected to database as ID ' + connection.threadId);
+});
+
+app.post('/register', (req, res) => {
+  const { username, password } = req.body;
+
+  // 获取当前系统时间
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  // 检查用户名是否已存在于数据库中
+  const checkUsernameQuery = 'SELECT * FROM users WHERE username = ?';
+  connection.query(checkUsernameQuery, [username], (err, results) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ message: '注册失败' });
+    } else {
+      if (results.length > 0) {
+        // 如果存在相同用户名的记录，返回已存在消息
+        res.status(400).json({ message: '该用户已存在' });
+      } else {
+        // 获取当前最大的idusers值
+        const getMaxUserIdQuery = 'SELECT MAX(idusers) AS maxUserId FROM users';
+        connection.query(getMaxUserIdQuery, (err, result) => {
+          if (err) {
+            console.error(err);
+            res.status(500).json({ message: '注册失败' });
+          } else {
+            let nextUserId = result[0].maxUserId ? result[0].maxUserId + 1 : 10001;
+            // 将用户名、密码、自动分配的idusers和注册日期插入到数据库中
+            const insertUserQuery = 'INSERT INTO users (idusers, username, password, register_date) VALUES (?, ?, ?, ?)';
+            connection.query(insertUserQuery, [nextUserId, username, password, currentDate], (err, result) => {
+              if (err) {
+                console.error(err);
+                res.status(500).json({ message: '注册失败' });
+              } else {
+                res.status(200).json({ message: '注册成功' });
+              }
+            });
+          }
+        });
+      }
+    }
+  });
+});
+
+
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+
+app.post('/sql',(req,res)=>{
+console.log('请求的sql',req.body);
+const { sql } = req.body;
+//数据库连接查询
+const connection = mysql.createConnection({
+  host: 'localhost',
+  port:3306,
+  user: 'root',
+  password: 'MuLin0301',
+  database: 'todomvc',});
+
+
+
+// 连接到MySQL数据库
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to database:', err);
+    return;
+  }
+  console.log('Connected to database');
+});
+
+// 执行SQL查询
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      res.status(500).json({ error: 'Error executing query' });
+      return;
+    }
+//     const orderedDataList = results.map(data => {
+//    return {
+//      stock_code: data.stock_code,
+//      stock_name: data.stock_name,
+//      avg_price_jan: data.avg_price_jan,
+//      avg_price_feb: data.avg_price_feb,
+//      avg_price_mar: data.avg_price_mar,
+//      avg_price_apr: data.avg_price_apr,
+//      avg_price_may: data.avg_price_may,
+//      avg_price_jun: data.avg_price_jun,
+//      avg_price_jul: data.avg_price_jul,
+//      avg_price_aug: data.avg_price_aug,
+//      avg_price_sep: data.avg_price_sep,
+//      avg_price_oct: data.avg_price_oct,
+//      avg_price_nov: data.avg_price_nov,
+//      avg_price_dec: data.avg_price_dec
+//    };
+//  });
+
+    // 返回查询结果
+   console.log(results);
+   console.log(results[0].stock_name);
+
+    res.json(results);
+  });
+
 });
